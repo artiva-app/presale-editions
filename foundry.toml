@@ -1,7 +1,8 @@
 [default]
-src = 'src'
-out = 'out'
+auto_detect_solc = true
 libs = ['lib']
-remappings = ['ds-test/=lib/ds-test/src/']
-
-# See more config options https://github.com/gakonst/foundry/tree/master/config
+optimizer = true
+optimizer_runs = 500000
+out = 'dist/artifacts'
+src = 'contracts'
+test = 'test'

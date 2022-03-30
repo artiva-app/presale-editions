@@ -1,0 +1,26 @@
+{
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.5.0",
+    "@openzeppelin/contracts-upgradeable": "^4.3.2",
+    "base64-sol": "^1.0.1"
+  },
+  "devDependencies": {
+    "@typechain/ethers-v5": "^9.0.0",
+    "husky": "^7.0.0",
+    "lint-staged": "^12.3.1",
+    "prettier": "^2.5.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.19",
+    "solhint": "^3.3.6",
+    "solhint-plugin-prettier": "^0.0.5",
+    "typechain": "^7.0.0",
+    "typescript": "^4.5.5"
+  },
+  "scripts": {
+    "build": "forge build && yarn typechain",
+    "clean": "forge clean && rm -rf dist/typechain",
+    "prepare": "husky install",
+    "prepublishOnly": "rm -rf ./dist && forge clean && forge build && yarn typechain && cp -R contracts dist && cp -R addresses dist",
+    "test": "forge test",
+    "typechain": "typechain --target=ethers-v5 'dist/artifacts/*/*.json' --out-dir dist/typechain"
+  }
+}
