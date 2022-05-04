@@ -156,9 +156,9 @@ contract PresaleEditionsTest is DSTest {
         proof[1] = bytes32(0x29ec45f0409d89a93bb3d009b77ef1c24da4b04d81e7f149ff41fac10df8a942);
 
         vm.startPrank(presaleBuyer);
-        presaleEditions.purchasePresale{value: 0.5 ether}(editionId, 1, proof);
+        presaleEditions.purchasePresale{value: 1.5 ether}(editionId, 3, proof);
 
-        vm.expectRevert("ALREADY_CLAIMED");
+        vm.expectRevert("PRESALE_CLAIMS_MAXED");
         presaleEditions.purchasePresale{value: 0.5 ether}(editionId, 1, proof);
         vm.stopPrank();
     }
@@ -204,7 +204,7 @@ contract PresaleEditionsTest is DSTest {
         proof[1] = bytes32(0x29ec45f0409d89a93bb3d009b77ef1c24da4b04d81e7f149ff41fac10df8a942);
 
         vm.prank(presaleBuyer);
-        vm.expectRevert("INVALID_AMOUNT");
+        vm.expectRevert("PRESALE_CLAIMS_MAXED");
         presaleEditions.purchasePresale{value: 0.5 ether}(editionId, 6, proof);
     }
 
@@ -299,9 +299,10 @@ contract PresaleEditionsTest is DSTest {
 
     /// ------------ WITHDRAW ------------ ///
 
-    function testWithdraw() public {
-        PresaleTypes.EditionData memory editionData = PresaleTypes.EditionData("Test", "TEST", "", "", 0, "", 0, 5, 10, creator);
-        PresaleTypes.Presale memory presale = PresaleTypes.Presale(true, 0.5 ether, 3, creator, 1 ether, defaultMerkleRoot);
+    function testWithdraw(uint96 amount) public {
+        vm.assume(amount < 100);
+        PresaleTypes.EditionData memory editionData = PresaleTypes.EditionData("Test", "TEST", "", "", 0, "", 0, amount, 10, creator);
+        PresaleTypes.Presale memory presale = PresaleTypes.Presale(true, 0.5 ether, amount, creator, 1 ether, defaultMerkleRoot);
 
         vm.prank(creator);
         uint256 editionId = presaleEditions.createPresaleEdition(editionData, presale);
@@ -310,7 +311,7 @@ contract PresaleEditionsTest is DSTest {
         proof[1] = bytes32(0x29ec45f0409d89a93bb3d009b77ef1c24da4b04d81e7f149ff41fac10df8a942);
 
         vm.prank(presaleBuyer);
-        presaleEditions.purchasePresale{value: 0.5 ether}(editionId, 1, proof);
+        presaleEditions.purchasePresale{value: amount * 0.5 ether}(editionId, amount, proof);
 
         uint256 beforeBalance = address(creator).balance;
 
@@ -318,7 +319,7 @@ contract PresaleEditionsTest is DSTest {
         presaleEditions.withdraw(editionId);
 
         uint256 afterBalance = address(creator).balance;
-        require(afterBalance - beforeBalance == 0.5 ether);
+        require(afterBalance - beforeBalance == amount * 0.5 ether);
     }
 
     function testWithdrawMultiPurchase() public {

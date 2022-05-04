@@ -18,8 +18,8 @@ contract PresaleEditions is IPresaleEditions {
 
     mapping(uint256 => PresaleTypes.Presale) public editionIdToPresale;
     mapping(uint256 => uint256) public editionIdToBalance;
-    //EditionId => Claimant Address => Is Claimed
-    mapping(uint256 => mapping(address => bool)) claimed;
+    //EditionId => Claimant Address => Amount Claimed
+    mapping(uint256 => mapping(address => uint256)) presalesClaimed;
 
     modifier OnlyEditionOwner(uint256 _editionId) {
         ISingleEditionMintable edition = ISingleEditionMintableCreator(singleEditionMintableCreatorAddress).getEditionAtId(_editionId);
@@ -71,14 +71,13 @@ contract PresaleEditions is IPresaleEditions {
     ) external payable {
         PresaleTypes.Presale storage presale = editionIdToPresale[_editionId];
         require(presale.active, "NOT_ACTIVE");
-        require(!claimed[_editionId][msg.sender], "ALREADY_CLAIMED");
-        require(_amount <= presale.presaleAmount, "INVALID_AMOUNT");
+        require(presalesClaimed[_editionId][msg.sender] + _amount <= presale.presaleAmount, "PRESALE_CLAIMS_MAXED");
         require(msg.value == presale.presalePrice * _amount, "INVALID_PRICE");
 
         bytes32 leaf = keccak256(abi.encodePacked(msg.sender));
         require(MerkleProof.verify(_merkleProof, presale.merkleRoot, leaf), "PROOF_NOT_VERIFIED");
 
-        claimed[_editionId][msg.sender] = true;
+        presalesClaimed[_editionId][msg.sender] += _amount;
         editionIdToBalance[_editionId] += presale.presalePrice * _amount;
         _mint(_editionId, _amount);
     }
