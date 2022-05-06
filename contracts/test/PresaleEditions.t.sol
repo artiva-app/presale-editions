@@ -431,18 +431,15 @@ contract PresaleEditionsTest is DSTest {
 
         vm.startPrank(creator);
         uint256 editionId = presaleEditions.createPresaleEdition(editionData, presale);
+        presaleEditions.setFundsRecipient(editionId, otherCreator);
         presaleEditions.setPresalePrice(editionId, 2 ether);
         presaleEditions.setStandardPrice(editionId, 4 ether);
         presaleEditions.setMerkleRoot(editionId, bytes32(0));
         presaleEditions.setPresaleActive(editionId, false);
-        (
-            bool active,
-            uint256 presalePrice,
-            uint256 presaleAmount,
-            address presaleCreator,
-            uint256 standardPrice,
-            bytes32 merkleRoot
-        ) = presaleEditions.editionIdToPresale(editionId);
+        (bool active, uint256 presalePrice, uint256 presaleAmount, address fundsRecipent, uint256 standardPrice, bytes32 merkleRoot) = presaleEditions
+            .editionIdToPresale(editionId);
+
+        require(fundsRecipent == otherCreator);
         require(presalePrice == 2 ether);
         require(standardPrice == 4 ether);
         require(active == false);
@@ -458,6 +455,9 @@ contract PresaleEditionsTest is DSTest {
         uint256 editionId = presaleEditions.createPresaleEdition(editionData, presale);
 
         vm.startPrank(otherCreator);
+        vm.expectRevert("NOT_OWNER");
+        presaleEditions.setFundsRecipient(editionId, otherCreator);
+
         vm.expectRevert("NOT_OWNER");
         presaleEditions.setPresalePrice(editionId, 2 ether);
 

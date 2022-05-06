@@ -82,6 +82,11 @@ contract PresaleEditions is IPresaleEditions {
         _mint(_editionId, _amount);
     }
 
+    function setFundsRecipient(uint256 _editionId, address _fundsRecipent) external OnlyEditionOwner(_editionId) {
+        editionIdToPresale[_editionId].fundsRecipent = _fundsRecipent;
+        emit PresaleUpdated(_editionId, editionIdToPresale[_editionId]);
+    }
+
     function setPresalePrice(uint256 _editionId, uint256 _presalePrice) external OnlyEditionOwner(_editionId) {
         editionIdToPresale[_editionId].presalePrice = _presalePrice;
         emit PresaleUpdated(_editionId, editionIdToPresale[_editionId]);
