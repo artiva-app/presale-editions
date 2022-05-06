@@ -52,7 +52,7 @@ contract PresaleEditionsTest is DSTest {
         PresaleTypes.Presale memory presale = PresaleTypes.Presale(true, 0.5 ether, 3, creator, 1 ether, defaultMerkleRoot);
 
         vm.prank(creator);
-        uint256 editionId = presaleEditions.createPresaleEdition(editionData, presale);
+        presaleEditions.createPresaleEdition(editionData, presale);
     }
 
     function testCreateEdition() public {
@@ -436,8 +436,9 @@ contract PresaleEditionsTest is DSTest {
         presaleEditions.setStandardPrice(editionId, 4 ether);
         presaleEditions.setMerkleRoot(editionId, bytes32(0));
         presaleEditions.setPresaleActive(editionId, false);
-        (bool active, uint256 presalePrice, uint256 presaleAmount, address fundsRecipent, uint256 standardPrice, bytes32 merkleRoot) = presaleEditions
-            .editionIdToPresale(editionId);
+        (bool active, uint256 presalePrice, , address fundsRecipent, uint256 standardPrice, bytes32 merkleRoot) = presaleEditions.editionIdToPresale(
+            editionId
+        );
 
         require(fundsRecipent == otherCreator);
         require(presalePrice == 2 ether);
@@ -469,14 +470,10 @@ contract PresaleEditionsTest is DSTest {
 
         vm.expectRevert("NOT_OWNER");
         presaleEditions.setPresaleActive(editionId, false);
-        (
-            bool active,
-            uint256 presalePrice,
-            uint256 presaleAmount,
-            address presaleCreator,
-            uint256 standardPrice,
-            bytes32 merkleRoot
-        ) = presaleEditions.editionIdToPresale(editionId);
+        (bool active, uint256 presalePrice, , address fundsRecipent, uint256 standardPrice, bytes32 merkleRoot) = presaleEditions.editionIdToPresale(
+            editionId
+        );
+        require(fundsRecipent == creator);
         require(presalePrice == 0.5 ether);
         require(standardPrice == 1 ether);
         require(active == true);

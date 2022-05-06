@@ -109,7 +109,6 @@ contract PresaleEditions is IPresaleEditions {
 
     function withdraw(uint256 _editionId) external {
         PresaleTypes.Presale storage presale = editionIdToPresale[_editionId];
-        ISingleEditionMintable edition = ISingleEditionMintableCreator(singleEditionMintableCreatorAddress).getEditionAtId(_editionId);
         uint256 balance = editionIdToBalance[_editionId];
         editionIdToBalance[_editionId] = 0;
         Address.sendValue(payable(presale.fundsRecipent), balance);
