@@ -15,12 +15,14 @@ library PresaleTypes {
         address owner;
     }
 
-    struct Presale {
-        bool active;
+    struct SaleData {
+        uint256 presaleStartTime;
+        uint256 publicStartTime;
         uint256 presalePrice;
-        uint256 presaleAmount;
-        address fundsRecipent;
         uint256 standardPrice;
+        uint256 maxMintsPerPresale;
+        uint256 maxMintsPerPublicSale;
+        address fundsRecipent;
         bytes32 merkleRoot;
     }
 }

@@ -28,12 +28,7 @@ import {IEditionSingleMintable} from "./IEditionSingleMintable.sol";
     @author iain nash
     Repository: https://github.com/ourzora/nft-editions
 */
-contract SingleEditionMintable is
-    ERC721Upgradeable,
-    IEditionSingleMintable,
-    IERC2981Upgradeable,
-    OwnableUpgradeable
-{
+contract SingleEditionMintable is ERC721Upgradeable, IEditionSingleMintable, IERC2981Upgradeable, OwnableUpgradeable {
     using CountersUpgradeable for CountersUpgradeable.Counter;
     event PriceChanged(uint256 amount);
     event EditionSold(uint256 price, address owner);
@@ -130,7 +125,7 @@ contract SingleEditionMintable is
       @dev This allows the user to purchase a edition edition
            at the given price in the contract.
      */
-    function batchPurchase(uint256 _amount) external payable returns (uint256) {
+    function batchPurchase(uint256 _amount) external payable {
         require(salePrice > 0, "Not for sale");
         require(msg.value == (_amount * salePrice), "Wrong price");
         address[] memory toMint = new address[](1);
@@ -204,11 +199,7 @@ contract SingleEditionMintable is
       @param recipients list of addresses to send the newly minted editions to
       @dev This mints multiple editions to the given list of addresses.
      */
-    function mintEditions(address[] memory recipients)
-        external
-        override
-        returns (uint256)
-    {
+    function mintEditions(address[] memory recipients) external override returns (uint256) {
         require(_isAllowedToMint(), "Needs to be an allowed minter");
         return _mintEditions(recipients);
     }
@@ -216,12 +207,7 @@ contract SingleEditionMintable is
     /**
         Simple override for owner interface.
      */
-    function owner()
-        public
-        view
-        override(OwnableUpgradeable, IEditionSingleMintable)
-        returns (address)
-    {
+    function owner() public view override(OwnableUpgradeable, IEditionSingleMintable) returns (address) {
         return super.owner();
     }
 
@@ -242,10 +228,7 @@ contract SingleEditionMintable is
       @dev Allows for updates of edition urls by the owner of the edition.
            Only URLs can be updated (data-uris are supported), hashes cannot be updated.
      */
-    function updateEditionURLs(
-        string memory _imageUrl,
-        string memory _animationUrl
-    ) public onlyOwner {
+    function updateEditionURLs(string memory _imageUrl, string memory _animationUrl) public onlyOwner {
         imageUrl = _imageUrl;
         animationUrl = _animationUrl;
     }
@@ -273,18 +256,12 @@ contract SingleEditionMintable is
       @dev Private function to mint als without any access checks.
            Called by the public edition minting functions.
      */
-    function _mintEditions(address[] memory recipients)
-        internal
-        returns (uint256)
-    {
+    function _mintEditions(address[] memory recipients) internal returns (uint256) {
         uint256 startAt = atEditionId.current();
         uint256 endAt = startAt + recipients.length - 1;
         require(editionSize == 0 || endAt <= editionSize, "Sold out");
         while (atEditionId.current() <= endAt) {
-            _mint(
-                recipients[atEditionId.current() - startAt],
-                atEditionId.current()
-            );
+            _mint(recipients[atEditionId.current() - startAt], atEditionId.current());
             atEditionId.increment();
         }
         return atEditionId.current();
@@ -311,12 +288,7 @@ contract SingleEditionMintable is
         @dev Get royalty information for token
         @param _salePrice Sale price for the token
      */
-    function royaltyInfo(uint256, uint256 _salePrice)
-        external
-        view
-        override
-        returns (address receiver, uint256 royaltyAmount)
-    {
+    function royaltyInfo(uint256, uint256 _salePrice) external view override returns (address receiver, uint256 royaltyAmount) {
         if (owner() == address(0x0)) {
             return (owner(), 0);
         }
@@ -328,33 +300,13 @@ contract SingleEditionMintable is
         @param tokenId token id to get uri for
         @return base64-encoded json metadata object
     */
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
+    function tokenURI(uint256 tokenId) public view override returns (string memory) {
         require(_exists(tokenId), "No token");
 
-        return
-            sharedNFTLogic.createMetadataEdition(
-                name(),
-                description,
-                imageUrl,
-                animationUrl,
-                tokenId,
-                editionSize
-            );
+        return sharedNFTLogic.createMetadataEdition(name(), description, imageUrl, animationUrl, tokenId, editionSize);
     }
 
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        override(ERC721Upgradeable, IERC165Upgradeable)
-        returns (bool)
-    {
-        return
-            type(IERC2981Upgradeable).interfaceId == interfaceId ||
-            ERC721Upgradeable.supportsInterface(interfaceId);
+    function supportsInterface(bytes4 interfaceId) public view override(ERC721Upgradeable, IERC165Upgradeable) returns (bool) {
+        return type(IERC2981Upgradeable).interfaceId == interfaceId || ERC721Upgradeable.supportsInterface(interfaceId);
     }
 }
