@@ -105,6 +105,42 @@ contract PresaleEditionsTest is DSTest {
         require(merkleRoot == defaultMerkleRoot);
     }
 
+    function testRevert_PresaleNotBeforePublic() public {
+        PresaleTypes.EditionData memory editionData = PresaleTypes.EditionData("Test", "TEST", "", "", 0, "", 0, 10, 10, creator);
+        PresaleTypes.SaleData memory saleData = PresaleTypes.SaleData(
+            block.timestamp + 2 days,
+            block.timestamp + 1 days,
+            0.5 ether,
+            1 ether,
+            3,
+            6,
+            creator,
+            defaultMerkleRoot
+        );
+
+        vm.prank(creator);
+        vm.expectRevert("PRESALE_NOT_BEFORE_PUBLIC");
+        presaleEditions.createPresaleEdition(editionData, saleData);
+    }
+
+    function testRevert_PresaleNotInFuture() public {
+        PresaleTypes.EditionData memory editionData = PresaleTypes.EditionData("Test", "TEST", "", "", 0, "", 0, 10, 10, creator);
+        PresaleTypes.SaleData memory saleData = PresaleTypes.SaleData(
+            block.timestamp,
+            block.timestamp + 1 days,
+            0.5 ether,
+            1 ether,
+            3,
+            6,
+            creator,
+            defaultMerkleRoot
+        );
+
+        vm.prank(creator);
+        vm.expectRevert("PRESALE_NOT_IN_FUTURE");
+        presaleEditions.createPresaleEdition(editionData, saleData);
+    }
+
     /// ------------ PURCHAE PRESALE EDITION ------------ ///
 
     function testPurchasePresaleEdition() public {
@@ -399,14 +435,33 @@ contract PresaleEditionsTest is DSTest {
 
         vm.prank(creator);
         uint256 editionId = presaleEditions.createPresaleEdition(editionData, saleData);
-        bytes32[] memory proof = new bytes32[](2);
-        proof[0] = bytes32(0x12e46814651febb3096e11596a99293a2279d73edd9935d9528163bc1360baa9);
-        proof[1] = bytes32(0x29ec45f0409d89a93bb3d009b77ef1c24da4b04d81e7f149ff41fac10df8a942);
 
         vm.warp(2 days);
         vm.prank(standardBuyer);
         vm.expectRevert("INVALID_PRICE");
         presaleEditions.publicSale{value: 0.6 ether}(editionId, 1);
+    }
+
+    function testRevert_SaleClaimsMaxed() public {
+        PresaleTypes.EditionData memory editionData = PresaleTypes.EditionData("Test", "TEST", "", "", 0, "", 0, 5, 10, creator);
+        PresaleTypes.SaleData memory saleData = PresaleTypes.SaleData(
+            block.timestamp + 1 days,
+            block.timestamp + 2 days,
+            0.5 ether,
+            1 ether,
+            3,
+            6,
+            creator,
+            defaultMerkleRoot
+        );
+
+        vm.prank(creator);
+        uint256 editionId = presaleEditions.createPresaleEdition(editionData, saleData);
+
+        vm.warp(2 days);
+        vm.prank(standardBuyer);
+        vm.expectRevert("SALE_CLAIMS_MAXED");
+        presaleEditions.publicSale{value: 7 ether}(editionId, 7);
     }
 
     function testRevert_StandardSaleNotActive() public {
@@ -424,9 +479,6 @@ contract PresaleEditionsTest is DSTest {
 
         vm.prank(creator);
         uint256 editionId = presaleEditions.createPresaleEdition(editionData, saleData);
-        bytes32[] memory proof = new bytes32[](2);
-        proof[0] = bytes32(0x12e46814651febb3096e11596a99293a2279d73edd9935d9528163bc1360baa9);
-        proof[1] = bytes32(0x29ec45f0409d89a93bb3d009b77ef1c24da4b04d81e7f149ff41fac10df8a942);
 
         vm.prank(standardBuyer);
         vm.expectRevert("SALE_NOT_ACTIVE");
@@ -448,9 +500,6 @@ contract PresaleEditionsTest is DSTest {
 
         vm.prank(creator);
         uint256 editionId = presaleEditions.createPresaleEdition(editionData, saleData);
-        bytes32[] memory proof = new bytes32[](2);
-        proof[0] = bytes32(0x12e46814651febb3096e11596a99293a2279d73edd9935d9528163bc1360baa9);
-        proof[1] = bytes32(0x29ec45f0409d89a93bb3d009b77ef1c24da4b04d81e7f149ff41fac10df8a942);
 
         vm.warp(2 days);
         vm.prank(presaleBuyer);

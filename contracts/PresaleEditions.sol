@@ -1,6 +1,33 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
 
+//      _____        _____   _________________  ____  ____      ____       _____
+//  ___|\    \   ___|\    \ /                 \|    ||    |    |    |  ___|\    \
+// /    /\    \ |    |\    \\______     ______/|    ||    |    |    | /    /\    \
+//|    |  |    ||    | |    |  \( /    /  )/   |    ||    |    |    ||    |  |    |
+//|    |__|    ||    |/____/    ' |   |   '    |    ||    |    |    ||    |__|    |
+//|    .--.    ||    |\    \      |   |        |    ||    |    |    ||    .--.    |
+//|    |  |    ||    | |    |    /   //        |    ||\    \  /    /||    |  |    |
+//|____|  |____||____| |____|   /___//         |____|| \ ___\/___ / ||____|  |____|
+//|    |  |    ||    | |    |  |`   |          |    | \ |   ||   | / |    |  |    |
+//|____|  |____||____| |____|  |____|          |____|  \|___||___|/  |____|  |____|
+//  \(      )/    \(     )/      \(              \(      \(    )/      \(      )/
+//   '      '      '     '        '               '       '    '        '      '
+//
+//
+//     _____        _____        ______            ______        _____    ____             ______            ______
+// ___|\    \   ___|\    \   ___|\     \       ___|\     \   ___|\    \  |    |        ___|\     \       ___|\     \
+//|    |\    \ |    |\    \ |     \     \     |    |\     \ /    /\    \ |    |       |     \     \     |    |\     \
+//|    | |    ||    | |    ||     ,_____/|    |    |/____/||    |  |    ||    |       |     ,_____/|    |    |/____/|
+//|    |/____/||    |/____/ |     \--'\_|/ ___|    \|   | ||    |__|    ||    |  ____ |     \--'\_|/ ___|    \|   | |
+//|    ||    |||    |\    \ |     /___/|  |    \    \___|/ |    .--.    ||    | |    ||     /___/|  |    \    \___|/
+//|    ||____|/|    | |    ||     \____|\ |    |\     \    |    |  |    ||    | |    ||     \____|\ |    |\     \
+//|____|       |____| |____||____ '     /||\ ___\|_____|   |____|  |____||____|/____/||____ '     /||\ ___\|_____|
+//|    |       |    | |    ||    /_____/ || |    |     |   |    |  |    ||    |     |||    /_____/ || |    |     |
+//|____|       |____| |____||____|     | / \|____|_____|   |____|  |____||____|_____|/|____|     | / \|____|_____|
+//  \(           \(     )/    \( |_____|/     \(    )/       \(      )/    \(    )/     \( |_____|/     \(    )/
+//   '            '     '      '    )/         '    '         '      '      '    '       '    )/         '    '
+
 import {IPresaleEditions} from "./interfaces/IPresaleEditions.sol";
 import {ISingleEditionMintableCreator} from "./interfaces/ISingleEditionMintableCreator.sol";
 import {ISingleEditionMintable} from "./interfaces/ISingleEditionMintable.sol";
@@ -82,7 +109,10 @@ contract PresaleEditions is IPresaleEditions {
     function publicSale(uint256 _editionId, uint256 _amount) external payable {
         PresaleTypes.SaleData storage saleData = editionIdToSaleData[_editionId];
         require(publicSaleActive(_editionId), "SALE_NOT_ACTIVE");
+        require(publicSalesClaimed[_editionId][msg.sender] + _amount <= saleData.maxMintsPerPublicSale, "SALE_CLAIMS_MAXED");
         require(msg.value == saleData.standardPrice * _amount, "INVALID_PRICE");
+
+        publicSalesClaimed[_editionId][msg.sender] += _amount;
         editionIdToBalance[_editionId] += saleData.standardPrice * _amount;
         _mint(_editionId, _amount);
     }
