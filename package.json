@@ -2,17 +2,22 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.5.0",
     "@openzeppelin/contracts-upgradeable": "^4.3.2",
+    "@rari-capital/solmate": "^6.3.0",
     "base64-sol": "^1.0.1"
   },
+  "files": [
+    "./dist/**/*",
+    "./dist/*"
+  ],
   "devDependencies": {
-    "@typechain/ethers-v5": "^9.0.0",
+    "@typechain/ethers-v5": "^10.0.0",
     "husky": "^7.0.0",
     "lint-staged": "^12.3.1",
     "prettier": "^2.5.1",
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "solhint": "^3.3.6",
     "solhint-plugin-prettier": "^0.0.5",
-    "typechain": "^7.0.0",
+    "typechain": "^8.0.0",
     "typescript": "^4.5.5"
   },
   "scripts": {
@@ -21,6 +26,7 @@
     "prepare": "husky install",
     "prepublishOnly": "rm -rf ./dist && forge clean && forge build && yarn typechain && cp -R contracts dist && cp -R addresses dist",
     "test": "forge test",
-    "typechain": "typechain --target=ethers-v5 'dist/artifacts/*/*.json' --out-dir dist/typechain"
+    "typechain": "typechain --target=ethers-v5 'dist/artifacts/*/*.json' --out-dir dist/typechain",
+    "deploy": "forge create contracts/PresaleEditions.sol:PresaleEditions --constructor-args '0x048cEEE6Acc4e7d6ef12F241bCA5492d7DB7B3c6' --mnemonic-path ./mnemonic.txt --mnemonic-index 2 --rpc-url https://eth-mainnet.alchemyapi.io/v2/3UGhHaCdvRxUj-s5jNBG5sWgj9yTbIND --gas-price 13000000000 --priority-fee 1"
   }
 }

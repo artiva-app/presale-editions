@@ -1,41 +1,15 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.10;
 
-//      _____        _____   _________________  ____  ____      ____       _____
-//  ___|\    \   ___|\    \ /                 \|    ||    |    |    |  ___|\    \
-// /    /\    \ |    |\    \\______     ______/|    ||    |    |    | /    /\    \
-//|    |  |    ||    | |    |  \( /    /  )/   |    ||    |    |    ||    |  |    |
-//|    |__|    ||    |/____/    ' |   |   '    |    ||    |    |    ||    |__|    |
-//|    .--.    ||    |\    \      |   |        |    ||    |    |    ||    .--.    |
-//|    |  |    ||    | |    |    /   //        |    ||\    \  /    /||    |  |    |
-//|____|  |____||____| |____|   /___//         |____|| \ ___\/___ / ||____|  |____|
-//|    |  |    ||    | |    |  |`   |          |    | \ |   ||   | / |    |  |    |
-//|____|  |____||____| |____|  |____|          |____|  \|___||___|/  |____|  |____|
-//  \(      )/    \(     )/      \(              \(      \(    )/      \(      )/
-//   '      '      '     '        '               '       '    '        '      '
-//
-//
-//     _____        _____        ______            ______        _____    ____             ______            ______
-// ___|\    \   ___|\    \   ___|\     \       ___|\     \   ___|\    \  |    |        ___|\     \       ___|\     \
-//|    |\    \ |    |\    \ |     \     \     |    |\     \ /    /\    \ |    |       |     \     \     |    |\     \
-//|    | |    ||    | |    ||     ,_____/|    |    |/____/||    |  |    ||    |       |     ,_____/|    |    |/____/|
-//|    |/____/||    |/____/ |     \--'\_|/ ___|    \|   | ||    |__|    ||    |  ____ |     \--'\_|/ ___|    \|   | |
-//|    ||    |||    |\    \ |     /___/|  |    \    \___|/ |    .--.    ||    | |    ||     /___/|  |    \    \___|/
-//|    ||____|/|    | |    ||     \____|\ |    |\     \    |    |  |    ||    | |    ||     \____|\ |    |\     \
-//|____|       |____| |____||____ '     /||\ ___\|_____|   |____|  |____||____|/____/||____ '     /||\ ___\|_____|
-//|    |       |    | |    ||    /_____/ || |    |     |   |    |  |    ||    |     |||    /_____/ || |    |     |
-//|____|       |____| |____||____|     | / \|____|_____|   |____|  |____||____|_____|/|____|     | / \|____|_____|
-//  \(           \(     )/    \( |_____|/     \(    )/       \(      )/    \(    )/     \( |_____|/     \(    )/
-//   '            '     '      '    )/         '    '         '      '      '    '       '    )/         '    '
-
 import {IPresaleEditions} from "./interfaces/IPresaleEditions.sol";
 import {ISingleEditionMintableCreator} from "./interfaces/ISingleEditionMintableCreator.sol";
 import {ISingleEditionMintable} from "./interfaces/ISingleEditionMintable.sol";
 import {PresaleTypes} from "./libraries/PresaleTypes.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
+import {ReentrancyGuard} from "@rari-capital/solmate/src/utils/ReentrancyGuard.sol";
 
-contract PresaleEditions is IPresaleEditions {
+contract PresaleEditions is IPresaleEditions, ReentrancyGuard {
     event CreatedEdition(address editionContractAddress, uint256 editionId, PresaleTypes.SaleData saleData);
     event SaleDataUpdated(uint256 editionId, PresaleTypes.SaleData saleData);
     event EditionSold(uint256 editionId, uint256 amount, address buyer, PresaleTypes.SaleData saleData);
@@ -59,7 +33,11 @@ contract PresaleEditions is IPresaleEditions {
         singleEditionMintableCreatorAddress = _singleEditionMintableCreatorAddress;
     }
 
-    function createPresaleEdition(PresaleTypes.EditionData memory _editionData, PresaleTypes.SaleData memory _saleData) external returns (uint256) {
+    function createPresaleEdition(PresaleTypes.EditionData memory _editionData, PresaleTypes.SaleData memory _saleData)
+        external
+        nonReentrant
+        returns (uint256)
+    {
         ISingleEditionMintableCreator creator = ISingleEditionMintableCreator(singleEditionMintableCreatorAddress);
 
         require(_saleData.presaleStartTime < _saleData.publicStartTime, "PRESALE_NOT_BEFORE_PUBLIC");
@@ -92,7 +70,7 @@ contract PresaleEditions is IPresaleEditions {
         uint256 _editionId,
         uint256 _amount,
         bytes32[] calldata _merkleProof
-    ) external payable {
+    ) external payable nonReentrant {
         PresaleTypes.SaleData storage saleData = editionIdToSaleData[_editionId];
         require(presaleActive(_editionId), "PRESALE_NOT_ACTIVE");
         require(presalesClaimed[_editionId][msg.sender] + _amount <= saleData.maxMintsPerPresale, "PRESALE_CLAIMS_MAXED");
@@ -106,7 +84,7 @@ contract PresaleEditions is IPresaleEditions {
         _mint(_editionId, _amount);
     }
 
-    function publicSale(uint256 _editionId, uint256 _amount) external payable {
+    function publicSale(uint256 _editionId, uint256 _amount) external payable nonReentrant {
         PresaleTypes.SaleData storage saleData = editionIdToSaleData[_editionId];
         require(publicSaleActive(_editionId), "SALE_NOT_ACTIVE");
         require(publicSalesClaimed[_editionId][msg.sender] + _amount <= saleData.maxMintsPerPublicSale, "SALE_CLAIMS_MAXED");
@@ -117,7 +95,7 @@ contract PresaleEditions is IPresaleEditions {
         _mint(_editionId, _amount);
     }
 
-    function setSaleData(uint256 _editionId, PresaleTypes.SaleData memory _saleData) external OnlyEditionOwner(_editionId) {
+    function setSaleData(uint256 _editionId, PresaleTypes.SaleData memory _saleData) external OnlyEditionOwner(_editionId) nonReentrant {
         editionIdToSaleData[_editionId] = _saleData;
         emit SaleDataUpdated(_editionId, editionIdToSaleData[_editionId]);
     }
